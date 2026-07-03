@@ -1,27 +1,31 @@
 #!/bin/sh
 # Scan from the Samsung SCX-4300 flatbed on macOS, via SANE (xerox_mfp backend).
 #
-#   ./scan.sh                         # Color, 300 dpi, PDF -> ~/Desktop/scan-<timestamp>.pdf
-#   ./scan.sh -m Gray -r 150 -f png   # grayscale 150 dpi PNG
+#   ./scan.sh                         # Gray, 150 dpi, PDF -> ~/Desktop/scan-<timestamp>.pdf
+#   ./scan.sh -m Color -r 100 -f png  # color, 100 dpi, PNG
 #   ./scan.sh -o ~/Desktop/doc.pdf    # explicit output path
 #
 # Options:
-#   -r  resolution: 75|100|150|200|300|600   (default 300)
-#   -m  mode:       Color|Gray|Lineart|Halftone   (default Color)
+#   -r  resolution: 75|100|150|200|300|600   (default 150)
+#   -m  mode:       Gray|Color|Lineart|Halftone   (default Gray)
 #   -f  format:     pdf|png|jpeg|tiff        (default pdf)
 #   -o  output file (default ~/Desktop/scan-<timestamp>.<ext>)
+#
+# NOTE: this old scanner is happiest with Gray at <=150 dpi over USB. Heavy scans
+# (Color and/or >=300 dpi) can stall with "Error during device I/O". If a scan
+# hangs, power-cycle the printer and retry, or use a lighter setting.
 #
 # Needs:  brew install sane-backends
 set -u
 
-RES=300; MODE=Color; FORMAT=pdf; OUT=""
+RES=150; MODE=Gray; FORMAT=pdf; OUT=""
 while getopts "r:m:f:o:h" opt; do
   case "$opt" in
     r) RES=$OPTARG ;;
     m) MODE=$OPTARG ;;
     f) FORMAT=$OPTARG ;;
     o) OUT=$OPTARG ;;
-    h) sed -n '2,14p' "$0"; exit 0 ;;
+    h) sed -n '2,18p' "$0"; exit 0 ;;
     *) exit 2 ;;
   esac
 done
@@ -47,17 +51,18 @@ TMP=$(mktemp -t scx4300scan)
 ERR=$(mktemp -t scx4300err)
 
 echo ">>> Put the document face-down on the glass. Scanning ($MODE, ${RES} dpi)..."
-# The very first scan after power-on often fails with a transient USB I/O error, so retry.
 ok=0
-for i in 1 2 3 4 5; do
+for i in 1 2 3; do
   if "$SCANIMAGE" -d "$DEV" --mode "$MODE" --resolution "$RES" --format="$SANE_FMT" > "$TMP" 2> "$ERR" \
      && [ "$(stat -f%z "$TMP" 2>/dev/null || echo 0)" -gt 5000 ]; then
     ok=1; break
   fi
-  echo "    attempt $i: $(tr '\n' ' ' < "$ERR")retrying..."
+  echo "    attempt $i failed: $(tr '\n' ' ' < "$ERR")"
+  [ "$i" -lt 3 ] && { echo "    letting the scanner settle, retrying..."; sleep 4; }
 done
 if [ "$ok" != 1 ]; then
-  echo "Scan failed after 5 tries. Last error:"; cat "$ERR"; rm -f "$TMP" "$ERR"; exit 4
+  echo "Scan failed. If it stalled, power-cycle the printer and try again (or use a lighter setting: -m Gray -r 100)."
+  rm -f "$TMP" "$ERR"; exit 4
 fi
 rm -f "$ERR"
 

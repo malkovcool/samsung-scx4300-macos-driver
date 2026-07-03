@@ -56,6 +56,40 @@ lp -d Samsung_SCX_4300_Series file.pdf
 
 ---
 
+## Scanning
+
+The SCX-4300 is a multifunction unit — it scans, too. On macOS scanning is a
+separate stack from printing (**SANE**, not CUPS), so it needs one extra package:
+
+```sh
+brew install sane-backends
+```
+
+The scanner is recognized out of the box by SANE's `xerox_mfp` backend. Use the
+included helper — it auto-detects the device, retries the occasional first-scan
+USB hiccup, and saves a PDF to your Desktop:
+
+```sh
+./scan.sh                          # Color, 300 dpi, PDF -> ~/Desktop/scan-<timestamp>.pdf
+./scan.sh -m Gray -r 150 -f png    # grayscale, 150 dpi, PNG
+./scan.sh -o ~/Desktop/contract.pdf
+```
+
+Options: `-r 75|100|150|200|300|600` · `-m Color|Gray|Lineart` · `-f pdf|png|jpeg|tiff` · `-o <file>`.
+Flatbed only (no feeder) — place the page **face-down** on the glass.
+
+Or drive SANE directly:
+
+```sh
+scanimage -L                                              # list devices
+scanimage --mode Color --resolution 300 --format=png > scan.png
+```
+
+> If a scan aborts with `Error during device I/O`, just run it again — the first
+> transfer after power-on often fails. `scan.sh` already retries automatically.
+
+---
+
 ## What gets installed
 
 - `/usr/libexec/cups/filter/rastertoqpdl` — the driver (CUPS raster → QPDL).
@@ -184,6 +218,25 @@ sudo ./install.sh
 echo "привет" | lp -d Samsung_SCX_4300_Series
 lp -d Samsung_SCX_4300_Series файл.pdf
 ```
+
+## Сканирование
+SCX-4300 — МФУ, он ещё и сканирует. На macOS сканирование — отдельный от печати
+стек (**SANE**, не CUPS), нужен один пакет:
+```sh
+brew install sane-backends
+```
+Сканер подхватывается бэкендом `xerox_mfp` из коробки. Готовый скрипт сам находит
+устройство, повторяет попытку при I/O-сбое первого скана и сохраняет PDF на рабочий стол:
+```sh
+./scan.sh                          # Цвет, 300 dpi, PDF -> ~/Desktop/scan-<дата>.pdf
+./scan.sh -m Gray -r 150 -f png    # серый, 150 dpi, PNG
+./scan.sh -o ~/Desktop/договор.pdf
+```
+Опции: `-r 75|100|150|200|300|600` · `-m Color|Gray|Lineart` · `-f pdf|png|jpeg|tiff` · `-o <файл>`.
+Только планшет (без автоподатчика) — клади лист **лицом вниз** на стекло.
+
+Если скан обрывается с `Error during device I/O` — просто повтори; первый скан
+после включения часто срывается, `scan.sh` повторяет сам.
 
 ## Если печать пропала
 Чаще всего после крупного обновления macOS очищается каталог фильтров —

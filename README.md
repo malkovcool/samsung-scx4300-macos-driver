@@ -70,10 +70,12 @@ included helper — it auto-detects the device, retries the occasional first-sca
 USB hiccup, and saves a PDF to your Desktop:
 
 ```sh
-./scan.sh                          # Color, 300 dpi, PDF -> ~/Desktop/scan-<timestamp>.pdf
-./scan.sh -m Gray -r 150 -f png    # grayscale, 150 dpi, PNG
+./scan.sh                          # Gray, 150 dpi, PDF -> ~/Desktop/scan-<timestamp>.pdf
+./scan.sh -m Color -r 100 -f png   # color, 100 dpi, PNG
 ./scan.sh -o ~/Desktop/contract.pdf
 ```
+
+Or just **double-click `Scan.command`** in Finder for a one-click scan to PDF.
 
 Options: `-r 75|100|150|200|300|600` · `-m Color|Gray|Lineart` · `-f pdf|png|jpeg|tiff` · `-o <file>`.
 Flatbed only (no feeder) — place the page **face-down** on the glass.
@@ -82,11 +84,13 @@ Or drive SANE directly:
 
 ```sh
 scanimage -L                                              # list devices
-scanimage --mode Color --resolution 300 --format=png > scan.png
+scanimage --mode Gray --resolution 150 --format=png > scan.png
 ```
 
-> If a scan aborts with `Error during device I/O`, just run it again — the first
-> transfer after power-on often fails. `scan.sh` already retries automatically.
+> **This old scanner is finicky over USB.** It's reliable in **Gray at ≤150 dpi**;
+> heavier scans (Color and/or ≥300 dpi) often stall with `Error during device I/O`.
+> `scan.sh` retries automatically, but if a scan **hangs**, power-cycle the printer
+> (off/on) and try again — aborting a scan mid-transfer leaves the scan engine stuck.
 
 ---
 
@@ -228,15 +232,19 @@ brew install sane-backends
 Сканер подхватывается бэкендом `xerox_mfp` из коробки. Готовый скрипт сам находит
 устройство, повторяет попытку при I/O-сбое первого скана и сохраняет PDF на рабочий стол:
 ```sh
-./scan.sh                          # Цвет, 300 dpi, PDF -> ~/Desktop/scan-<дата>.pdf
-./scan.sh -m Gray -r 150 -f png    # серый, 150 dpi, PNG
+./scan.sh                          # Серый, 150 dpi, PDF -> ~/Desktop/scan-<дата>.pdf
+./scan.sh -m Color -r 100 -f png   # цвет, 100 dpi, PNG
 ./scan.sh -o ~/Desktop/договор.pdf
 ```
+Или просто **двойной клик по `Scan.command`** в Finder — скан в PDF одним кликом.
+
 Опции: `-r 75|100|150|200|300|600` · `-m Color|Gray|Lineart` · `-f pdf|png|jpeg|tiff` · `-o <файл>`.
 Только планшет (без автоподатчика) — клади лист **лицом вниз** на стекло.
 
-Если скан обрывается с `Error during device I/O` — просто повтори; первый скан
-после включения часто срывается, `scan.sh` повторяет сам.
+**Сканер капризный по USB.** Надёжно тянет **Gray до 150 dpi**; тяжёлые сканы
+(цвет и/или ≥300 dpi) часто срываются с `Error during device I/O`. `scan.sh`
+повторяет сам, но если скан **завис** — выключи/включи принтер и повтори
+(прерванный на середине скан клинит движок).
 
 ## Если печать пропала
 Чаще всего после крупного обновления macOS очищается каталог фильтров —
